@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Answer Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background-color: #f0f1ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background-color: #e8e9ff;
+        }
+
+        .upload-area h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 12px 30px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .mcq-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .mcq-container.show {
+            display: block;
+        }
+
+        .question-block {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .question-block:last-child {
+            border-bottom: none;
+        }
+
+        .question-number {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .option {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #f9f9f9;
+            font-size: 1em;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background-color: #f0f1ff;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background-color: #e8e9ff;
+            font-weight: 600;
+        }
+
+        .option.correct {
+            border-color: #28a745;
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .option.incorrect {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .option.unanswered {
+            border-color: #ffc107;
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .submit-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            margin-top: 30px;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .score-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .score-card {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .score-card.correct {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .score-card.incorrect {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .score-card.unanswered {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        .score-card-number {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .score-card-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .result-details {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #ddd;
+        }
+
+        .result-item.correct {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .result-item.incorrect {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .result-item.unanswered {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .result-item-text {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .mode-selector {
+                flex-direction: column;
+            }
+
+            .score-cards {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .upload-section,
+            .mcq-container,
+            .results-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 MCQ Answer Checker</h1>
+            <p>Upload your answer key and test yourself</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <h3>📄 Upload Answer Key PDF</h3>
+                <p>Drag and drop your PDF here or click to select</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+                <input type="file" id="fileInput" accept=".pdf" />
+            </div>
+            <div class="loading" id="uploadLoading">
+                <div class="spinner"></div>
+                <p>Processing PDF...</p>
+            </div>
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+
+        <div class="mode-selector hidden" id="modeSelector">
+            <button class="mode-btn active" onclick="selectMode('immediate')">Mode 1: Immediate Check</button>
+            <button class="mode-btn" onclick="selectMode('submit')">Mode 2: Submit All</button>
+        </div>
+
+        <div class="mcq-container hidden" id="mcqContainer">
+            <div id="questionsList"></div>
+            <div class="submit-section" id="submitSection" style="display: none;">
+                <button class="submit-btn" onclick="submitAnswers()">Submit Answers</button>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2>Results</h2>
+            </div>
+            <div class="score-cards" id="scoreCards"></div>
+            <div class="result-details" id="resultDetails"></div>
+            <div style="text-align: center;">
+                <button class="reset-btn" onclick="resetAll()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'immediate';
+        let answerKey = {};
+        let userAnswers = {};
+        let totalQuestions = 0;
+
+        // Upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const statusMessage = document.getElementById('statusMessage');
+        const uploadLoading = document.getElementById('uploadLoading');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileUpload);
+
+        function handleFileUpload() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.pdf')) {
+                showStatus('Only PDF files are allowed!', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadLoading.classList.add('show');
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                uploadLoading.classList.remove('show');
+                if (data.success) {
+                    answerKey = data.answerKey;
+                    totalQuestions = data.totalQuestions;
+                    showStatus(data.message, 'success');
+                    document.getElementById('modeSelector').classList.remove('hidden');
+                    loadQuestions();
+                } else {
+                    showStatus(data.error || 'Failed to upload file', 'error');
+                }
+            })
+            .catch(error => {
+                uploadLoading.classList.remove('show');
+                showStatus('Error uploading file: ' + error, 'error');
+            });
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            userAnswers = {};
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('submitSection').style.display = 
+                mode === 'submit' ? 'block' : 'none';
+            
+            loadQuestions();
+        }
+
+        function loadQuestions() {
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = '';
+            userAnswers = {};
+
+            const sortedQuestions = Object.keys(answerKey)
+                .map(Number)
+                .sort((a, b) => a - b);
+
+            sortedQuestions.forEach(qNum => {
+                const questionBlock = document.createElement('div');
+                questionBlock.className = 'question-block';
+                questionBlock.innerHTML = `
+                    <div class="question-number">Question ${qNum}</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(${qNum}, 'A', event)">A</div>
+                        <div class="option" onclick="selectOption(${qNum}, 'B', event)">B</div>
+                        <div class="option" onclick="selectOption(${qNum}, 'C', event)">C</div>
+                        <div class="option" onclick="selectOption(${qNum}, 'D', event)">D</div>
+                    </div>
+                `;
+                questionsList.appendChild(questionBlock);
+            });
+
+            document.getElementById('mcqContainer').classList.add('show');
+        }
+
+        function selectOption(qNum, option, event) {
+            const optionElement = event.target;
+            
+            // For immediate mode
+            if (currentMode === 'immediate') {
+                const correctAnswer = answerKey[qNum];
+                const isCorrect = option === correctAnswer;
+
+                // Remove previous selections and feedback
+                optionElement.parentElement.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+
+                // Add new selection with feedback
+                if (isCorrect) {
+                    optionElement.classList.add('correct');
+                } else {
+                    optionElement.classList.add('incorrect');
+                    // Also show correct answer
+                    const correctElement = Array.from(optionElement.parentElement.children)
+                        .find(el => el.textContent === correctAnswer);
+                    if (correctElement) {
+                        correctElement.classList.add('correct');
+                    }
+                }
+            } else {
+                // For submit mode - just select the option
+                optionElement.parentElement.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                optionElement.classList.add('selected');
+                userAnswers[qNum] = option;
+            }
+        }
+
+        function submitAnswers() {
+            if (Object.keys(userAnswers).length === 0) {
+                showStatus('Please select at least one answer!', 'error');
+                return;
+            }
+
+            fetch('/api/check-answers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ answers: userAnswers })
+            })
+            .then(response => response.json())
+            .then(results => {
+                displayResults(results);
+            })
+            .catch(error => {
+                showStatus('Error checking answers: ' + error, 'error');
+            });
+        }
+
+        function displayResults(results) {
+            document.getElementById('mcqContainer').classList.remove('show');
+            
+            const scoreCards = document.getElementById('scoreCards');
+            scoreCards.innerHTML = `
+                <div class="score-card correct">
+                    <div class="score-card-number">${results.correct}</div>
+                    <div class="score-card-label">Correct</div>
+                </div>
+                <div class="score-card incorrect">
+                    <div class="score-card-number">${results.wrong}</div>
+                    <div class="score-card-label">Incorrect</div>
+                </div>
+                <div class="score-card unanswered">
+                    <div class="score-card-number">${results.unanswered}</div>
+                    <div class="score-card-label">Unanswered</div>
+                </div>
+            `;
+
+            const percentage = totalQuestions > 0 ? ((results.correct / totalQuestions) * 100).toFixed(1) : 0;
+            
+            const scorePercentage = document.createElement('div');
+            scorePercentage.className = 'score-card';
+            scorePercentage.style.gridColumn = 'span 1';
+            scorePercentage.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            scorePercentage.innerHTML = `
+                <div class="score-card-number">${percentage}%</div>
+                <div class="score-card-label">Score</div>
+            `;
+            scoreCards.appendChild(scorePercentage);
+
+            const resultDetails = document.getElementById('resultDetails');
+            resultDetails.innerHTML = '';
+
+            const sortedQuestions = Object.keys(results.details)
+                .map(Number)
+                .sort((a, b) => a - b);
+
+            sortedQuestions.forEach(qNum => {
+                const detail = results.details[qNum];
+                const resultItem = document.createElement('div');
+                
+                let resultClass = 'unanswered';
+                let statusText = 'Unanswered';
+                if (detail.userAnswer) {
+                    resultClass = detail.isCorrect ? 'correct' : 'incorrect';
+                    statusText = detail.isCorrect ? '✓ Correct' : '✗ Incorrect';
+                }
+
+                resultItem.className = `result-item ${resultClass}`;
+                resultItem.innerHTML = `
+                    <div class="result-item-text"><strong>Question ${qNum}:</strong> ${statusText}</div>
+                    <div class="result-item-text">Your Answer: ${detail.userAnswer || 'Not answered'}</div>
+                    <div class="result-item-text">Correct Answer: ${detail.correctAnswer}</div>
+                `;
+                resultDetails.appendChild(resultItem);
+            });
+
+            document.getElementById('resultsSection').classList.add('show');
+        }
+
+        function resetAll() {
+            userAnswers = {};
+            fileInput.value = '';
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('mcqContainer').classList.remove('show');
+            document.getElementById('modeSelector').classList.add('hidden');
+            statusMessage.classList.remove('success', 'error');
+            statusMessage.textContent = '';
+        }
+    </script>
+</body>
+</html>
